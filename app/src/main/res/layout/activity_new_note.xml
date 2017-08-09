@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/llNewNote"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="5dp"
+    tools:context="com.hoaiutc95.note.activity.NewNoteActivity">
+
+    <ImageView
+        android:id="@+id/ivPicture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:layout_below="@+id/ivPicture"
+        android:id="@+id/tvDateTimeCurrent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:paddingRight="@dimen/padding_text"
+        android:paddingTop="@dimen/padding_text"
+        android:text="@string/date_time_curent"
+        android:textSize="@dimen/font_size_normal" />
+
+    <EditText
+        android:id="@+id/etNewTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tvDateTimeCurrent"
+        android:hint="@string/hint_new_title"
+        android:paddingLeft="@dimen/pading_left"
+        android:textSize="@dimen/font_size_medium" />
+
+    <EditText
+        android:id="@+id/etNewNote"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/etNewTitle"
+        android:hint="@string/hint_new_note"
+        android:paddingLeft="@dimen/pading_left"
+        android:textSize="@dimen/font_size_medium" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/etNewNote">
+
+        <ImageView
+            android:id="@+id/ivAlarmIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="@dimen/pading_left"
+            android:src="@drawable/ic_action_alarms_select" />
+
+        <TextView
+            android:id="@+id/tvEnableAlarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="left|center_vertical"
+            android:layout_toRightOf="@+id/ivAlarmIcon"
+            android:onClick="enableAlarm"
+            android:text="@string/alarm_title" />
+
+        <LinearLayout
+            android:id="@+id/llAlarmBackLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/ivAlarmIcon"
+            android:orientation="horizontal"
+            android:visibility="invisible">
+
+            <Spinner
+                android:id="@+id/spAlarmDate"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent" />
+
+            <Spinner
+                android:id="@+id/spAlarmTime"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent" />
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="disableAlarm"
+                android:background="@drawable/ic_action_cancel" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+
+</RelativeLayout>

@@ -1,0 +1,13 @@
+<resources>
+    <!--New Note Screen-->
+    <string name="app_name">Note</string>
+    <string name="hint_new_note">Note</string>
+    <string name="date_time_curent">03/08/2017 5:19</string>
+    <string name="alarm_title">Alarm</string>
+    <string name="hint_new_title">Title</string>
+
+    <string-array name="data_camera_dialog">
+        <item>Take Photo</item>
+        <item>Choose Photo</item>
+    </string-array>
+</resources>
