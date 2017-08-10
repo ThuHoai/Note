@@ -5,6 +5,8 @@ import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -12,7 +14,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
@@ -23,22 +24,32 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.hoaiutc95.note.R;
+import com.hoaiutc95.note.custom.PictureItemAdapter;
 import com.hoaiutc95.note.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+import static java.util.Calendar.DAY_OF_MONTH;
+import static java.util.Calendar.getInstance;
 
 /**
  * Created by Thu Hoai on 8/6/2017.
@@ -48,13 +59,17 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
     protected static final int REQUEST_TAKE_PHOTO = 1;
     protected static final int REQUEST_CHOOSE_PHOTO = 2;
     protected ActionBar mActionBar;
-    protected RelativeLayout mLayout;
+    protected ScrollView mLayout;
     protected TextView mEnableAlarm, mTvDateTimeCurrent;
     protected LinearLayout mAlarmBackLayout;
     protected Spinner mSpAlarmDate, mSpAlarmTime;
-    protected final Calendar mCalendar = Calendar.getInstance();
+    protected final Calendar mCalendar = getInstance();
     protected Dialog mInsertPictureDialog, mChooseColorDialog;
     protected ImageView mPicture;
+    protected ArrayList<String> mPictrureList;
+    protected PictureItemAdapter mPictureItemAdapter;
+    protected GridView mGvPicture;
+    protected Date mAlarm;
     protected ArrayAdapter<String> mArrayDateAlarm, mArrayTimeAlarm;
     protected String[] mDateName = {"Today", "Tomorrow", "Next Thursday", "Other..."};
     protected String[] mTimeName = {"9:00", "13:00", "17:00", "20:00", "Other..."};
@@ -63,10 +78,17 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        int layoutId = getLayoutId();
+        setContentView(layoutId);
+        mGvPicture = (GridView) findViewById(R.id.grvPicture);
+        mPictrureList = new ArrayList<>();
+        mPictureItemAdapter = new PictureItemAdapter(this, R.layout.gridview_item_picture, mPictrureList);
+        mGvPicture.setAdapter(mPictureItemAdapter);
     }
 
-    private void showInsertPictureDiaglog(){
+    public abstract int getLayoutId();
+
+    private void showInsertPictureDiaglog() {
         mInsertPictureDialog = new Dialog(this);
         mInsertPictureDialog.setContentView(R.layout.insert_picture_dialog);
         mInsertPictureDialog.setTitle("Select Picture");
@@ -74,7 +96,7 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
     }
 
     private File createImageFile() throws IOException {
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File image = File.createTempFile(
@@ -84,8 +106,9 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
-    public void takePhoto(View v){
-       Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+    public void takePhoto(View v) {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             File photoFile = null;
             try {
@@ -93,38 +116,50 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
-
             if (photoFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(getApplication(), "com.hoaiutc95.note.fileprovider", photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+                List<ResolveInfo> resInfoList = getApplicationContext().getPackageManager().queryIntentActivities(takePictureIntent, PackageManager.MATCH_DEFAULT_ONLY);
+                for (ResolveInfo resolveInfo : resInfoList) {
+                    String packageName = resolveInfo.activityInfo.packageName;
+                    getApplicationContext().grantUriPermission(packageName, photoURI, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
             }
         }
         mInsertPictureDialog.cancel();
     }
 
-    public  void choosePhoto(View v){
+    public void choosePhoto(View v) {
         mInsertPictureDialog.dismiss();
-        final Intent galleryIntent = new Intent(Intent.ACTION_PICK);
+        final Intent galleryIntent = new Intent();
         galleryIntent.setType("image/*");
         galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(galleryIntent, "Select Source"), REQUEST_CHOOSE_PHOTO);
+        startActivityForResult(galleryIntent, REQUEST_CHOOSE_PHOTO);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        mPicture = (ImageView) findViewById(R.id.ivPicture);
-        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == Activity.RESULT_OK && data != null) {
-            Bitmap bm = getResizedBitmap(mCurrentPhotoPath, 50,50);
-            mPicture.setImageBitmap(bm);
-        }/*else
-        if(requestCode == REQUEST_CHOOSE_PHOTO && resultCode == Activity.RESULT_OK  && data != null){
-            Bitmap imageBitmap = (Bitmap) data.getExtras().get("data");
-            mPicture.setImageBitmap(imageBitmap);
-        }*/
-    }
+        Uri currImageUri;
+        mGvPicture.setVisibility(View.VISIBLE);
+        if (data != null) {
+            switch (requestCode) {
+                case REQUEST_TAKE_PHOTO: {
+                    mPictrureList.add(mCurrentPhotoPath);
+                    mPictureItemAdapter.notifyDataSetChanged();
+                }
+                break;
+                case REQUEST_CHOOSE_PHOTO: {
+                    currImageUri = data.getData();
+                    String path = getRealPathFromURI(currImageUri);
+                    mPictrureList.add(path);
+                    mPictureItemAdapter.notifyDataSetChanged();
+                }
+            }
+        }
 
+    }
 
     public void chooseColor() {
         mChooseColorDialog = new Dialog(this);
@@ -133,34 +168,38 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
         mChooseColorDialog.show();
     }
 
-    public void getColorClick(View v){
+    public void getColorClick(View v) {
         mChooseColorDialog.dismiss();
         String color = v.getTag().toString();
-        mLayout = (RelativeLayout) findViewById(R.id.llNewNote);
+        mLayout = (ScrollView) findViewById(R.id.llNewNote);
         mLayout.setBackgroundColor(Color.parseColor(color));
     }
 
-    public void getTimeCurrent() {
-        Date today = new Date(System.currentTimeMillis());
-        String s = Utils.normalDateFormat.format(today);
+    public void getTimeCurrent() throws ParseException {
+        String s = Utils.normalDateFormat.format(mCalendar.getTime());
         mTvDateTimeCurrent.setText(s);
+        mAlarm = Utils.dateFormat.parse(s);
     }
 
     private class OnSelectedDateAlarm implements AdapterView.OnItemSelectedListener {
-
         @Override
         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
             switch (parent.getSelectedItemPosition()) {
+                case 0:
+                    break;
+                case 1:
+                    mAlarm.setDate(mCalendar.get(Calendar.DAY_OF_YEAR) + 1);
+                    break;
+                case 2:
+                    break;
                 case 3:
                     showDatePickerDialog();
                     break;
             }
-
         }
 
         @Override
         public void onNothingSelected(AdapterView<?> parent) {
-
         }
     }
 
@@ -177,7 +216,6 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
         public void onNothingSelected(AdapterView<?> parent) {
             Toast.makeText(getApplicationContext(), "No No No!!!", Toast.LENGTH_LONG).show();
         }
-
     }
 
     private void showDatePickerDialog() {
@@ -188,7 +226,7 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
                 mDateName[3] = Utils.dateFormat.format(mCalendar.getTime());
                 mArrayDateAlarm.notifyDataSetChanged();
             }
-        }, mCalendar.get(Calendar.YEAR), mCalendar.get(Calendar.MONTH), mCalendar.get(Calendar.DAY_OF_MONTH));
+        }, mCalendar.get(Calendar.YEAR), mCalendar.get(Calendar.MONTH), mCalendar.get(DAY_OF_MONTH));
         chooseDateDialog.setTitle("Choose Date");
         chooseDateDialog.show();
     }
@@ -226,7 +264,7 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.item_action_camera:
-               showInsertPictureDiaglog();
+                showInsertPictureDiaglog();
                 return true;
             case R.id.item_choose_color:
                 chooseColor();
@@ -240,51 +278,13 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
         }
     }
 
-
-    public static Bitmap getResizedBitmap(String filepath, int reqWidth, int reqHeight) {
-        Bitmap bitmap;
-        // Decode bitmap to get current dimensions.
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(filepath, options);
-
-        // Calculate sample size of bitmap.
-        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-
-        // Decode bitmap again, setting the new dimensions.
-        options.inJustDecodeBounds = false;
-        bitmap = BitmapFactory.decodeFile(filepath, options);
-
-        // Return resized bitmap.
-        return bitmap;
-    }
-    private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw height and width of image.
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        // Initialize sample size.
-        int inSampleSize = 1;
-        // If image is larger than requested in at least one dimension.
-        if (height > reqHeight || width > reqWidth) {
-
-            // Calculate ratios of height and width to requested height and width.
-            final int heightRatio = Math.round((float) height / (float) reqHeight);
-            final int widthRatio = Math.round((float) width / (float) reqWidth);
-
-            // Choose the smallest ratio as sample size value. This will guarantee a final image
-            // with both dimensions larger than or equal to the requested height and width.
-            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
-        }
-        return inSampleSize;
-    }
-
-
     private String getRealPathFromURI(Uri contentUri) {
-        String[] proj = { MediaStore.Images.Media.DATA };
-        Cursor cursor = managedQuery(contentUri, proj, null, null, null);
-        if (cursor == null) {
-            return contentUri.getPath();
-        }
+        String[] proj = {MediaStore.Images.Media.DATA};
+        Cursor cursor = managedQuery(contentUri,
+                proj,
+                null,
+                null,
+                null);
         int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
         cursor.moveToFirst();
         return cursor.getString(column_index);
