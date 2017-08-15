@@ -53,28 +53,29 @@ import static java.util.Calendar.getInstance;
 
 public abstract class BaseNoteActivity extends AppCompatActivity {
     protected static final int REQUEST_TAKE_PHOTO = 1;
-    protected DAOdb database;
     public static final int MULTIPLE_PERMISSIONS = 10;
     protected static final int REQUEST_CHOOSE_PHOTO = 2;
+    protected DAOdb database;
     protected EditText mTitle, mContent;
     protected TextView mCurrentDate;
     protected ActionBar mActionBar;
     protected ScrollView mLayout;
-    protected LinearLayout mAlarmBackLayout;
     protected GridView mGvPicture;
-    protected TextView mEnableAlarm, mTvDateTimeCurrent = null;
+    protected TextView mEnableAlarm;
+    protected LinearLayout mAlarmBackLayout;
     protected Spinner mSpAlarmDate, mSpAlarmTime;
     protected Dialog mInsertPictureDialog, mChooseColorDialog;
     protected ArrayList<String> mPictrurePathList;
     protected PictureItemAdapter mPictureItemAdapter;
     protected ArrayAdapter<String> mArrayDateAlarm, mArrayTimeAlarm;
-    protected String mCurrentPhotoPath = null;
-    protected String mColor = null;
     protected int mPrevPosDateSpinner;
     protected int mPrevPostTimeSpinner;
+    protected AlarmManager alarmManager;
+    protected String mColor = null;
+    protected String mCurrentPhotoPath = null;
+    protected TextView mTvDateTimeCurrent = null;
     protected Calendar mCalendar = getInstance();
     protected static String mDate = "", mTime = "";
-    protected AlarmManager alarmManager;
     protected String[] mDateName = {"Today", "Tomorrow", "Next Thursday", "Other..."};
     protected String[] mTimeName = {"9:00", "13:00", "17:00", "20:00", "Other..."};
     AdapterView.OnItemSelectedListener onDateSpinnerItemSelectedListener = new OnSelectedDateAlarm();
@@ -103,7 +104,6 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
 
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
         }
 
         @Override
@@ -122,7 +122,6 @@ public abstract class BaseNoteActivity extends AppCompatActivity {
 
         @Override
         public void afterTextChanged(Editable s) {
-
         }
     }
 
