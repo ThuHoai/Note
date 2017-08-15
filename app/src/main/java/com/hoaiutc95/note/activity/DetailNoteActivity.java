@@ -47,7 +47,6 @@ public class DetailNoteActivity extends BaseNoteActivity {
         return R.layout.activity_detail_note;
     }
 
-
     private void getView() throws ParseException {
         customActionBar();
         database = new DAOdb(this);
@@ -85,8 +84,8 @@ public class DetailNoteActivity extends BaseNoteActivity {
         String content = mContent.getText().toString().trim();
         String alarm = isAlarmChanged() ? time : mNote.getmAlarm();
         String newColor = mColor != null ? mColor : mNote.getmColor();
-        database.upDateNote(new Note(mNote.getmId(), title, content, newColor, alarm,
-                mNote.getmCreateDate(), convertPictureListtoString()));
+        database.upDateNote(new Note(mNote.getmId(), title, content,
+        newColor, alarm, mNote.getmCreateDate(), convertPictureListtoString()));
     }
 
     private void getNote(Note note) {
