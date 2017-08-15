@@ -1,27 +1,52 @@
 package com.hoaiutc95.note.model;
 
+import android.os.Parcelable;
+
+import java.io.Serializable;
 import java.util.Date;
 
-/**
- * Created by Thu Hoai on 8/3/2017.
- */
 
-public class Note {
+public class Note implements Serializable {
     private long mId;
     private String mTitle;
     private String mDescription;
     private String mColor;
-    private Date mAlarm;
-    private Date mCreateDate;
+    private String mAlarm;
+    private String mCreateDate;
     private String mImagePath;
 
-    public Note(long mId, String mTitle, String mDescription, String mColor, Date mAlarm, Date mCreateDate, String mImagePath) {
+    public Note() {
+    }
+
+    public Note(long mId, String mTitle, String mDescription, String mColor, String mAlarm, String mCreateDate, String mImagePath) {
         this.mId = mId;
         this.mTitle = mTitle;
         this.mDescription = mDescription;
+        if(mColor == null){
+            mColor = "#FFFFFF";
+        }
         this.mColor = mColor;
         this.mAlarm = mAlarm;
         this.mCreateDate = mCreateDate;
+        if (mImagePath == null || mImagePath.equals(" ")){
+            mImagePath = " ";
+        }
+        this.mImagePath = mImagePath;
+    }
+
+    public Note(String mTitle, String mDescription, String mColor, String mAlarm, String mCreateDate, String mImagePath) {
+        this.mTitle = mTitle;
+        this.mDescription = mDescription;
+        if(mColor == null){
+            mColor = "#FFFFFF";
+        }
+        this.mColor = mColor;
+        this.mAlarm = mAlarm;
+        this.mCreateDate = mCreateDate;
+
+        if (mImagePath == null || mImagePath.equals(" ")){
+            mImagePath = " ";
+        }
         this.mImagePath = mImagePath;
     }
 
@@ -57,19 +82,19 @@ public class Note {
         this.mColor = mColor;
     }
 
-    public Date getmAlarm() {
+    public String getmAlarm() {
         return mAlarm;
     }
 
-    public void setmAlarm(Date mAlarm) {
+    public void setmAlarm(String mAlarm) {
         this.mAlarm = mAlarm;
     }
 
-    public Date getmCreateDate() {
+    public String getmCreateDate() {
         return mCreateDate;
     }
 
-    public void setmCreateDate(Date mCreateDate) {
+    public void setmCreateDate(String mCreateDate) {
         this.mCreateDate = mCreateDate;
     }
 
